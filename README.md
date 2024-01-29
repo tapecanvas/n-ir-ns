@@ -42,6 +42,7 @@
  - [x] working supercollider example
  - [x] build most basic version for norns 
  - [x] add basic controls (wet, dry)
+ - [ ] put bundled IR files in /lib and update paths (easier for beta testing)
  - [ ] file select and load to ir buffer/convert to spectrum (48khz files only!)
 	- if you load a new IR, you will need to dump previous buffer
 		- [ ] figure out how to clear buffers / spectrums / etc
