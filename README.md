@@ -13,7 +13,7 @@
 # resources:
 - [PartConv | SuperCollider](https://doc.sccode.org/Classes/PartConv.html)
 - [convolution_reverb.scd -  schollz/supercollisions · GitHub](https://github.com/schollz/supercollisions/blob/main/convolution_reverb.scd)
-- [here are](https://www.openair.hosted.york.ac.uk/?page_id=36) some impulse response files
+- [here are](https://www.openair.hosted.york.ac.uk/?page_id=36) some impulse response files (make sure to convert to 48khz before using - [this makes quick work of the task](https://onlineaudioconverter.com/)) 
 - [GitHub - hankyates/norns-convolution-reverb](https://github.com/hankyates/norns-convolution-reverb) - existing partconv project. Termendously helpful in getting me started. Thank you 
 
 # pieces:
@@ -42,6 +42,7 @@
  - [x] working supercollider example
  - [x] build most basic version for norns 
  - [x] add basic controls (wet, dry)
+ - [ ] put bundled IR files in /lib and update paths (easier for beta testing)
  - [ ] file select and load to ir buffer/convert to spectrum (48khz files only!)
 	- if you load a new IR, you will need to dump previous buffer
 		- [ ] figure out how to clear buffers / spectrums / etc
