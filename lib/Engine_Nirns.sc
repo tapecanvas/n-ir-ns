@@ -1,109 +1,89 @@
-// heavily borrowing from Engine_Convolution by Hank Yates -> https://github.com/hankyates/norns-convolution-reverb
-// thank you!
-
 Engine_Nirns : CroneEngine {
-  var bufsize, irL, irR, convolution;
+  var <bufsize, <irL, <irR, <convolution, <fftsize, <irBufL, <irBufR;
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
   }
 
-// allocate memory to the following
-
   alloc {
-
-// set fft size
-
-//~fftsize = 4096;
-~fftsize = 2048;
-//  ~fftsize = 1024;
-
-// load the impule response files for both channels
-  
-    irL = Buffer.readChannel(context.server, "/home/we/dust/audio/ir/circularoutput.wav", channels: [0]);
-    irR = Buffer.readChannel(context.server, "/home/we/dust/audio/ir/circularoutput.wav", channels: [1]);
-
-//    irL = Buffer.readChannel(context.server, "/home/we/dust/audio/ir/bottledungeon.wav", channels: [0]);
-//    irR = Buffer.readChannel(context.server, "/home/we/dust/audio/ir/bottledungeon.wav", channels: [1]);
+    fftsize = 2048; // Set FFT size
     
-//    irL = Buffer.readChannel(context.server, "/home/we/dust/audio/tehn/mancini1.wav", channels: [0]);
-//    irR = Buffer.readChannel(context.server, "/home/we/dust/audio/tehn/mancini1.wav", channels: [1]);
+    // Initialize irBufL and irBufR with default buffers
+    irBufL = Buffer.alloc(context.server, fftsize, 1);
+    irBufR = Buffer.alloc(context.server, fftsize, 1);
 
-    context.server.sync;
-    
-// determine and set buffer size
-
-    bufsize = PartConv.calcBufSize(~fftsize, irL);
-
-    ~irBufL = Buffer.alloc(context.server, bufsize, 1);
-    ~irBufL.preparePartConv(irL, ~fftsize);
-
-    ~irBufR = Buffer.alloc(context.server, bufsize, 1);
-    ~irBufR.preparePartConv(irR, ~fftsize);
-
-    context.server.sync;
-
-// clear time domain data, keep spectral version
-
-    irL.free;
-    irR.free;
-    
-// add SynthDefs
-
-    SynthDef(\Nirns, {
-      arg dry, wet;
-
+    // Add SynthDefs
+    SynthDef(\Nirns, { |dry=0, wet=0|
       var sigL = SoundIn.ar(0);
       var sigR = SoundIn.ar(1);
 
-      var verbL = PartConv.ar(sigL, ~fftsize, ~irBufL.bufnum);
-      var verbR = PartConv.ar(sigR, ~fftsize, ~irBufR.bufnum);
+      var verbL = PartConv.ar(sigL, fftsize, irBufL.bufnum);
+      var verbR = PartConv.ar(sigR, fftsize, irBufR.bufnum);
 
       var outL = Mix([sigL * dry, verbL * wet * 0.2]);
       var outR = Mix([sigR * dry, verbR * wet * 0.2]);
 
       Out.ar(0, [outL, outR]);
-
     }).add;
-    
-    
-// 
 
-    convolution = Synth.new(\Nirns, [
-      \dry, 0,
-      \wet, 0
-    ], target: context.xg);
-    
-// add commands that lua layer can control
-    
-    this.addCommand("dry", "f", { arg msg;
-      convolution.set(\dry, msg[1]);
-    });
+    // Create convolution synth
+  //  convolution = Synth.new(\Nirns, [\dry, 0, \wet, 0], target: context.xg);
 
-    this.addCommand("wet", "f", { arg msg;
-      convolution.set(\wet, msg[1]);
-    });
-    
-    
-    
-        
-// not working:    
-// JackDriver: exception in real time: alloc failed, increase server's memory allocation (e.g. via ServerOptions)
-// PartConv Error: Spectral data buffer not allocated 
-// testing spectrum clear - run when exiting script or loading new IR  
-//    this.addCommand("spectrum_clear", { arg msg;
-//      ~irBufR.free; 
-//      ~irBufL.free;
-//    });
-    
+    // Add commands that Lua layer can control
+    this.addCommand("dry", "f", { |msg| convolution.set(\dry, msg[1]) });
+    this.addCommand("wet", "f", { |msg| "yep".postln; convolution.set(\wet, msg[1]) });
+    this.addCommand("ir_file", "s", { |msg| "loadIRcalled".postln; this.loadIR(msg[1]) });
+  
+  }
 
+loadIR { |file|
+  Routine.run({
+    file.postln; // debug
 
-   } 
-   
-    free {
+    irL = Buffer.readChannel(context.server, file, channels: [0]);
+    irR = Buffer.readChannel(context.server, file, channels: [1]);
+    irL.postln; // Print the left channel buffer
+    irR.postln; // Print the right channel buffer
+
+    ~startUsingIR.value;
+    context.server.sync;   
+
+    // Determine and set buffer size
+    bufsize = PartConv.calcBufSize(fftsize, irL);
+    bufsize.postln; // Print the buffer size
+
+    // Free the original buffers
+    irBufL.free;
+    irBufR.free;
+     context.server.sync;
+
+     // Allocate new buffers
+    irBufL = Buffer.alloc(context.server, bufsize, 1);
+    irBufL.preparePartConv(irL, fftsize);
+    context.server.sync;  // Wait for the server to finish processing the FFT
+
+    irBufR = Buffer.alloc(context.server, bufsize, 1);
+    irBufR.preparePartConv(irR, fftsize);
+    context.server.sync;  // Wait for the server to finish processing the FFT
+
+    // Free the original synth
     convolution.free;
-    ~irBufR.free;
-    ~irBufL.free;
+
+    // Create a new synth that uses the loaded IR
+    convolution = Synth.new(\Nirns, [\dry, 0, \wet, 0], target: context.xg);
+
+    context.server.sync;
+
+    // Clear time domain data, keep spectral version
+    irL.free;
+    irR.free;
+  });
+}
+   
+  free {
+    convolution.free;
+    irBufR.free;
+    irBufL.free;
   }
 
 }

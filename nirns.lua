@@ -1,29 +1,29 @@
--- thanks to:
--- lines forum, @hankyates,
--- and @tyleretters
---------------------
 -- N(IR)NS
+-- v0.1.1
 -- convolution 
 -- cross-synthesis
 --------------------
--- >> k1: exit
--- >> k2: 
--- >> k3: 
--- >> e1:
+-- controls
 -- >> e2: dry signal
 -- >> e3: wet signal
+-- params
+-- >> load IR
+--------------------
+-- thanks @hankyates  
 
 engine.name = 'Nirns'
---fileselect = require 'fileselect'
 ControlSpec = require "controlspec"
 Formatters = require "formatters"
+fileselect = require 'fileselect'
+file = "/home/we/dust/audio/ir/bottledungeon.wav"
 
 
 function init()
+
   message = "N(IR)NS" 
   screen_dirty = true 
   redraw_clock_id = clock.run(redraw_clock) 
-
+  
   params:add{type = "control", id= "dry", name = "dry", controlspec = ControlSpec.new(0.00, 1.00, 'lin', 0.01, 0.50, '%', 1/(1/.01)), action = function(value)
     engine.dry(value)
     screen_dirty=true
@@ -33,87 +33,89 @@ function init()
     engine.wet(value)
     screen_dirty=true
   end}
+
+  params:add{type="file", id="ir_file", name="file",
+  action = function(file)
+          print("Action function called")  -- Print a message when the function is called
+    -- if file ~= "cancel" then
+    --   print("Selected file: " .. file)  -- Print the selected file
+    --   engine.ir_file(file)
+    --   screen_dirty=true
+  if file == "-" then
+          -- Load the default IR file
+   local default_file = "/home/we/dust/audio/ir/bottledungeon.wav"
+   print("Loading default IR file: " .. default_file)
+   engine.ir_file(default_file)
+ --  params:set("ir_file",default_file,silent)
+   screen_dirty=true
+   elseif file ~= "-" then
+   print("selected file: " .. file)
+   engine.ir_file(file)
+   screen_dirty=true
+   end
+  end
+}
   
   params:bang()
-
-
 end
 
 
--- screen:
-
-function redraw_clock() ----- a clock that draws space
-  while true do ------------- "while true do" means "do this forever"
-    clock.sleep(1/15) ------- pause for a fifteenth of a second (aka 15fps)
-    if screen_dirty then ---- only if something changed
-      redraw() -------------- redraw space
-      screen_dirty = false -- and everything is clean again
+function redraw_clock()
+  while true do
+    clock.sleep(1/15)
+    if screen_dirty then
+      redraw()
+      screen_dirty = false
     end
   end
 end
 
 function redraw()
   screen.clear()
-  screen.aa(0) ----------------- enable anti-aliasing
-  screen.font_face(24) ---------- set the font face to "04B_03"
-  screen.font_size(10) ---------- set the size to 8
-  screen.level(15) ------------- max
-  screen.move(64, 15) ---------- move the pointer to x = 64, y = 32
-  screen.text_center(message) -- center our message at (64, 32)
-  screen.pixel(0, 0) ----------- make a pixel at the north-western most terminus
-  screen.pixel(127, 0) --------- and at the north-eastern
-  screen.pixel(127, 63) -------- and at the south-eastern
-  screen.pixel(0, 63) ---------- and at the south-western
-  screen.fill() ---------------- fill the termini and message at once
-  screen.update() -------------- update space
+  screen.aa(0)
+  screen.font_face(24)
+  screen.font_size(10)
+  screen.level(15)
+  screen.move(64, 15)
+  screen.text_center(message)
+  screen.pixel(0, 0)
+  screen.pixel(127, 0)
+  screen.pixel(127, 63)
+  screen.pixel(0, 63)
+  screen.fill()
+  screen.update()
 
   screen.move(10,30)
   screen.text("dry: ")
   screen.move(118,30)
   screen.text_right(params:string("dry"))
 
-
-  screen.move(10,40)
+  screen.move(10,45)
   screen.text("wet: ")
   screen.move(118,40)
-  screen.text_right(params:string("wet", "%"))
+  screen.text_right(params:string("wet"))
+  
+  screen.move(10,60)
+  screen.text(params:string("ir_file"))
 
   screen.update()
 end
 
 
---keys:
-
--- testing spectrum clear
-function key(n, z)
-  if z == 1 then
-    if n == 2 then
-    elseif n == 3 then
-    end
-  end
-end
-
--- encoders:
-
--- adjust wet/dry mix
 function enc(n, delta)
-    if n == 2 then  
-      params:delta("dry", delta)
-      redraw()
-     -- engine.dry(delta)       
-    elseif n == 3 then
-      params:delta("wet", delta)
-      redraw()
-    --  engine.wet(delta)
+  if n == 2 then  
+    params:delta("dry", delta)
+  elseif n == 3 then
+    params:delta("wet", delta)
   end
 end
 
 
-function r() ----------------------------- execute r() in the repl to quickly rerun this script
-  norns.script.load(norns.state.script) -- https://github.com/monome/norns/blob/main/lua/core/state.lua
-end
+-- function r()
+--   norns.script.load(norns.state.script)
+-- end
 
 
-function cleanup() --------------- cleanup() is automatically called on script close
-  clock.cancel(redraw_clock_id) -- melt our clock vie the id we noted
+function cleanup()
+ clock.cancel(redraw_clock_id)
 end
