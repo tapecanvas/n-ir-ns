@@ -32,7 +32,7 @@
 - [ ] _bug_ have to adjust wet and dry controls after IR file load to hear effect.
 - [ ] fix volume issue (some IR files are way louder than others)
 	- (might need a input volume control pre conv and an output control)
- - [ ] add more IR files
+ - [ ] add more IR files (check out [creative convolution thread](https://llllllll.co/t/creative-convolution-share-your-impulse-responses/33495))
 - [ ] whats the best way to bundle audio files with scripts??
 - [ ] buffer number in debug increases every time a new IR is loaded - is that to be expected or a bug?
 - [ ] ir file pre load processing (normalize, start/end, trim to size - might need to add fade(tail), preview, etc)
@@ -40,7 +40,7 @@
 
 ## archive:
 - [x] file select and load to ir buffer/convert to spectrum (48khz files only!)
-- if you load a new IR, you will need to dump previous buffer
+	- if you load a new IR, you will need to dump previous buffer
 - [x] figure out how to clear buffers / spectrums / etc
 - [x] -bug- have to load script twice for synthdef / ir's to load. I think this has to do with the ir file/spectrums not being generated as soon as script loads
 - [x] working supercollider example
