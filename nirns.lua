@@ -11,11 +11,11 @@
 --------------------
 -- thanks @hankyates  
 
-engine.name = 'Nirns'
-ControlSpec = require "controlspec"
-Formatters = require "formatters"
-fileselect = require 'fileselect'
-file = "/home/we/dust/audio/ir/bottledungeon.wav"
+local engine.name = 'Nirns'
+local ControlSpec = require "controlspec"
+local Formatters = require "formatters"
+local fileselect = require 'fileselect'
+local file = "/home/we/dust/audio/ir/bottledungeon.wav"
 
 
 function init()
